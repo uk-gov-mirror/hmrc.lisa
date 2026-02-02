@@ -30,11 +30,11 @@ class TaxEnrolmentConnectorSpec extends BaseTestSpec {
 
   val taxEnrolmentConnector = new TaxEnrolmentConnector(mockAppConfig, mockHttpClientV2)
 
-  when(mockAppConfig.taxEnrolmentUrl).thenReturn("http://localhost:1234") 
+  when(mockAppConfig.taxEnrolmentUrl).thenReturn("http://localhost:1234")
 
   "Get enrolment status" should {
     when(mockHttpClientV2.get(any())(any())).thenReturn(mockRequestBuilder)
-    
+
     "return a success verbatim" when {
       "a successful response is returned from tax enrolment" in {
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
@@ -48,7 +48,7 @@ class TaxEnrolmentConnectorSpec extends BaseTestSpec {
           )
 
         doEnrolmentStatus { response =>
-          response.status must be (ACCEPTED)
+          response.status             must be(ACCEPTED)
           Json.parse(response.body) mustBe Json.parse(s"""{"status": "PENDING"}""")
         }
       }
@@ -66,7 +66,7 @@ class TaxEnrolmentConnectorSpec extends BaseTestSpec {
           )
 
         doEnrolmentStatus { response =>
-          response.status must be (INTERNAL_SERVER_ERROR)
+          response.status             must be(INTERNAL_SERVER_ERROR)
           Json.parse(response.body) mustBe Json.parse(s"""{"code": "INTERNAL_ERROR"}""")
         }
       }
@@ -76,10 +76,10 @@ class TaxEnrolmentConnectorSpec extends BaseTestSpec {
   "Subscribe" should {
     when(mockHttpClientV2.put(any())(any())).thenReturn(mockRequestBuilder)
     when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-    
+
     "return a success verbatim" when {
       "a successful response is returned from tax enrolment" in {
-        when(mockRequestBuilder.execute[HttpResponse](any(),any()))
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(
             Future.successful(
               HttpResponse(
@@ -90,14 +90,14 @@ class TaxEnrolmentConnectorSpec extends BaseTestSpec {
           )
 
         doSubscribe { response =>
-          response.status must be (NO_CONTENT)
-          response.body mustBe  ""
+          response.status must be(NO_CONTENT)
+          response.body mustBe ""
         }
       }
     }
     "return an error verbatim" when {
       "an error is returned from tax enrolment" in {
-        when(mockRequestBuilder.execute[HttpResponse](any(),any()))
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(
             Future.successful(
               HttpResponse(
@@ -108,7 +108,7 @@ class TaxEnrolmentConnectorSpec extends BaseTestSpec {
           )
 
         doSubscribe { response =>
-          response.status must be (INTERNAL_SERVER_ERROR)
+          response.status             must be(INTERNAL_SERVER_ERROR)
           Json.parse(response.body) mustBe Json.parse(s"""{"code": "INTERNAL_ERROR"}""")
         }
       }
@@ -126,4 +126,5 @@ class TaxEnrolmentConnectorSpec extends BaseTestSpec {
 
     callback(response)
   }
+
 }

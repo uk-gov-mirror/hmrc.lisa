@@ -30,16 +30,17 @@ import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
+
 trait BaseTestSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
 
-  lazy val mockDesConnector: DesConnector = mock[DesConnector]
+  lazy val mockDesConnector: DesConnector                   = mock[DesConnector]
   lazy val mockTaxEnrolmentConnector: TaxEnrolmentConnector = mock[TaxEnrolmentConnector]
-  lazy val mockAuthCon: AuthConnector = mock[AuthConnector]
-  lazy val controllerComponents: ControllerComponents = stubControllerComponents()
-  lazy val mockAppConfig: AppConfig = mock[AppConfig]
-  lazy val mockHttpClientV2: HttpClientV2 = mock[HttpClientV2]
-  lazy val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]
-  lazy val mockAuditService: AuditService = mock[AuditService]
+  lazy val mockAuthCon: AuthConnector                       = mock[AuthConnector]
+  lazy val controllerComponents: ControllerComponents       = stubControllerComponents()
+  lazy val mockAppConfig: AppConfig                         = mock[AppConfig]
+  lazy val mockHttpClientV2: HttpClientV2                   = mock[HttpClientV2]
+  lazy val mockRequestBuilder: RequestBuilder               = mock[RequestBuilder]
+  lazy val mockAuditService: AuditService                   = mock[AuditService]
 
   implicit def hc: HeaderCarrier = HeaderCarrier()
 

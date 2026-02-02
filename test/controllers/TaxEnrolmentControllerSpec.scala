@@ -30,7 +30,8 @@ import scala.concurrent.Future
 
 class TaxEnrolmentControllerSpec extends BaseTestSpec {
 
-  lazy val taxEnrolmentController = new TaxEnrolmentController(mockAuthCon, mockTaxEnrolmentConnector, controllerComponents)
+  lazy val taxEnrolmentController =
+    new TaxEnrolmentController(mockAuthCon, mockTaxEnrolmentConnector, controllerComponents)
 
   override def beforeEach(): Unit = {
     reset(mockTaxEnrolmentConnector)
@@ -40,27 +41,32 @@ class TaxEnrolmentControllerSpec extends BaseTestSpec {
   "Get Enrolments for Group ID" should {
     "return the status and body as returned from the connector" when {
       "no errors occur" in {
-        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(any())).thenReturn(Future.successful(HttpResponse(OK, "test")))
+        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(any()))
+          .thenReturn(Future.successful(HttpResponse(OK, "test")))
 
         val res = doGetSubscriptionsForGroupId()
 
-        status(res) mustBe OK
+        status(res)          mustBe OK
         contentAsString(res) mustBe "test"
       }
     }
     "return appropriate 500 internal server error response" when {
       "any errors occur" in {
-        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(any())).thenReturn(Future.failed(UpstreamErrorResponse("fail", BAD_REQUEST, BAD_REQUEST)))
+        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("fail", BAD_REQUEST, BAD_REQUEST)))
 
         val res = doGetSubscriptionsForGroupId()
 
-        status(res) mustBe INTERNAL_SERVER_ERROR
-        contentAsJson(res) mustBe Json.parse("""{"code":"INTERNAL_SERVER_ERROR","reason":"Dependent systems are currently not responding"}""")
+        status(res)        mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(res) mustBe Json.parse(
+          """{"code":"INTERNAL_SERVER_ERROR","reason":"Dependent systems are currently not responding"}"""
+        )
       }
     }
     "return unauthorised" when {
       "the auth connector doesnt return successfully" in {
-        when(mockAuthCon.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.failed(BearerTokenExpired("unauthorised")))
+        when(mockAuthCon.authorise[Unit](any(), any())(any(), any()))
+          .thenReturn(Future.failed(BearerTokenExpired("unauthorised")))
 
         val res = doGetSubscriptionsForGroupId()
 
@@ -70,7 +76,7 @@ class TaxEnrolmentControllerSpec extends BaseTestSpec {
 
   }
 
-  private def doGetSubscriptionsForGroupId() = {
+  private def doGetSubscriptionsForGroupId() =
     taxEnrolmentController.getSubscriptionsForGroupId("1234567890").apply(FakeRequest(Helpers.GET, "/"))
-  }
+
 }

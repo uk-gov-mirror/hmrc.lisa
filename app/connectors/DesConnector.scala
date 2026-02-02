@@ -25,15 +25,15 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class DesConnector @Inject()(config: AppConfig, httpClientV2: HttpClientV2)(implicit ec: ExecutionContext)
-  extends RawResponseReads  with Logging with CorrelationGenerator {
+class DesConnector @Inject() (config: AppConfig, httpClientV2: HttpClientV2)(implicit ec: ExecutionContext)
+    extends RawResponseReads with Logging with CorrelationGenerator {
 
-  lazy val desUrl = config.desUrl
+  lazy val desUrl          = config.desUrl
   lazy val subscriptionUrl = s"$desUrl/lifetime-isa/manager"
   lazy val registrationUrl = s"$desUrl/registration/organisation"
 
   private val desHeaders: Seq[(String, String)] = Seq(
-    "Environment" -> config.desUrlHeaderEnv,
+    "Environment"   -> config.desUrlHeaderEnv,
     "Authorization" -> s"Bearer ${config.desAuthToken}"
   )
 
@@ -47,7 +47,9 @@ class DesConnector @Inject()(config: AppConfig, httpClientV2: HttpClientV2)(impl
     httpPost(uri, payload, "register", "registerOnce")
   }
 
-  private def httpPost(uri: String, payload: JsValue, urlType: String, connectorLog: String)(implicit hc: HeaderCarrier) = {
+  private def httpPost(uri: String, payload: JsValue, urlType: String, connectorLog: String)(implicit
+    hc: HeaderCarrier
+  ) = {
     logger.info(s"DES Connector post $connectorLog $uri")
     val headerCarrier = addCorrelationId(hc)
     httpClientV2.post(url"$uri")(headerCarrier).setHeader(desHeaders: _*).withBody(payload).execute recover {

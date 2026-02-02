@@ -1,11 +1,10 @@
-
 import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 
 val appName = "lisa"
-name                      := "lisa"
-PlayKeys.playDefaultPort  := 8886
-majorVersion              := 1
-retrieveManaged           := true
+name := "lisa"
+PlayKeys.playDefaultPort := 8886
+majorVersion := 1
+retrieveManaged := true
 
 lazy val lisa = Project(appName, file("."))
 enablePlugins(PlayScala, SbtDistributablesPlugin)
@@ -19,9 +18,10 @@ libraryDependencies ++= AppDependencies()
 
 Compile / unmanagedResourceDirectories += baseDirectory.value / "resources"
 
-Test / fork                            := true
+Test / fork := true
 
 CodeCoverageSettings()
 
 scalacOptions += "-Wconf:src=routes/.*:s"
 
+addCommandAlias("scalafmtAll", "all scalafmtSbt scalafmt Test/scalafmt")

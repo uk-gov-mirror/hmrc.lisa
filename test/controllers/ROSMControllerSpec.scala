@@ -33,16 +33,27 @@ import scala.io.Source
 
 class ROSMControllerSpec extends BaseTestSpec {
 
-  lazy val rosmController = new ROSMController(mockAuthCon, mockDesConnector, mockTaxEnrolmentConnector, controllerComponents, mockAuditService, mockAppConfig)
+  lazy val rosmController = new ROSMController(
+    mockAuthCon,
+    mockDesConnector,
+    mockTaxEnrolmentConnector,
+    controllerComponents,
+    mockAuditService,
+    mockAppConfig
+  )
 
   override def beforeEach(): Unit = {
     reset(mockDesConnector)
     when(mockAuthCon.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
   }
 
-  val regPayload: String = Source.fromInputStream(getClass.getResourceAsStream("/json/registration_example.json")).mkString
+  val regPayload: String =
+    Source.fromInputStream(getClass.getResourceAsStream("/json/registration_example.json")).mkString
+
   val regErrorJson: String = Source.fromInputStream(getClass.getResourceAsStream("/json/utr_error.json")).mkString
-  val subscribePayload: String = Source.fromInputStream(getClass.getResourceAsStream("/json/subscription_example.json")).mkString
+
+  val subscribePayload: String =
+    Source.fromInputStream(getClass.getResourceAsStream("/json/subscription_example.json")).mkString
 
   "Register endpoint" should {
 
@@ -59,10 +70,11 @@ class ROSMControllerSpec extends BaseTestSpec {
 
     "return a 400 error response with Invalid UTR as the response code" when {
       "the connector returns a 400 response" in {
-        when(mockDesConnector.register(any(), any())(any())).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, regErrorJson)))
+        when(mockDesConnector.register(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, regErrorJson)))
 
         doRegister() { res =>
-          status(res) mustBe BAD_REQUEST
+          status(res)                              mustBe BAD_REQUEST
           (contentAsJson(res) \ "code").as[String] mustBe "INVALID_UTR"
         }
       }
@@ -73,7 +85,7 @@ class ROSMControllerSpec extends BaseTestSpec {
         when(mockDesConnector.register(any(), any())(any())).thenReturn(Future.failed(new Exception("Error")))
 
         doRegister() { res =>
-          status(res) mustBe INTERNAL_SERVER_ERROR
+          status(res)                              mustBe INTERNAL_SERVER_ERROR
           (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
         }
       }
@@ -81,7 +93,8 @@ class ROSMControllerSpec extends BaseTestSpec {
 
     "return unauthorised" when {
       "the auth connector does not return successfully" in {
-        when(mockAuthCon.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.failed(BearerTokenExpired("Unauthorised")))
+        when(mockAuthCon.authorise[Unit](any(), any())(any(), any()))
+          .thenReturn(Future.failed(BearerTokenExpired("Unauthorised")))
 
         doRegister() { res =>
           status(res) mustBe UNAUTHORIZED
@@ -96,24 +109,26 @@ class ROSMControllerSpec extends BaseTestSpec {
     "return a 200 ok response with the subscriptionId" when {
       "everything is valid and no errors are thrown" in {
 
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
-
-        when(mockDesConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
+        when(mockDesConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
-          status(res) mustBe ACCEPTED
+          status(res)                                        mustBe ACCEPTED
           verify(mockAuditService).audit(
             auditType = ArgumentMatchers.eq("submitSubscriptionSuccess"),
             path = ArgumentMatchers.eq("submitSubscription"),
-            auditData = ArgumentMatchers.eq(Map(
-              "response" -> status(res).toString,
-              "safeId" -> "XE0001234567890",
-              "lisaManagerRef" -> "Z1234",
-              "subscriptionId" -> "928282776")
-            ))(any[HeaderCarrier])
+            auditData = ArgumentMatchers.eq(
+              Map(
+                "response"       -> status(res).toString,
+                "safeId"         -> "XE0001234567890",
+                "lisaManagerRef" -> "Z1234",
+                "subscriptionId" -> "928282776"
+              )
+            )
+          )(any[HeaderCarrier])
 
           (contentAsJson(res) \ "subscriptionId").as[String] mustBe "928282776"
         }
@@ -123,73 +138,72 @@ class ROSMControllerSpec extends BaseTestSpec {
     "return a 500 internal server error response" when {
 
       "the call to des fails" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.failed(UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)))
+        when(mockDesConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)))
 
         doSubscribe() { res =>
-          status(res) mustBe INTERNAL_SERVER_ERROR
+          status(res)                              mustBe INTERNAL_SERVER_ERROR
           verify(mockAuditService).audit(
             auditType = ArgumentMatchers.eq("submitSubscriptionFailed"),
             path = ArgumentMatchers.eq("submitSubscription"),
-            auditData = ArgumentMatchers.eq(Map(
-              "error" -> "Bad Request",
-              "lisaManagerRef" -> "Z1234")))(any[HeaderCarrier])
+            auditData = ArgumentMatchers.eq(Map("error" -> "Bad Request", "lisaManagerRef" -> "Z1234"))
+          )(any[HeaderCarrier])
 
           (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
         }
       }
 
       "the call to des returns an unexpected status code" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(OK, s"""{"subscriptionId": "928282776"}""")))
+        when(mockDesConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(OK, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
-          status(res) mustBe INTERNAL_SERVER_ERROR
+          status(res)                              mustBe INTERNAL_SERVER_ERROR
           (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
         }
       }
 
       "the call to tax enrolments fails" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.failed(UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)))
 
-        when(mockDesConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
+        when(mockDesConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
-          status(res) mustBe INTERNAL_SERVER_ERROR
+          status(res)                              mustBe INTERNAL_SERVER_ERROR
           (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
         }
       }
 
       "the call to tax enrolments returns an unexpected status code" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(ACCEPTED, "")))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
+        when(mockDesConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
-          status(res) mustBe INTERNAL_SERVER_ERROR
+          status(res)                              mustBe INTERNAL_SERVER_ERROR
           (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
         }
       }
 
       "the response from des does not contain a subscriptionId" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any())).
-          thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{}""")))
+        when(mockDesConnector.subscribe(any(), any())(any()))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{}""")))
 
         doSubscribe() { res =>
-          status(res) mustBe INTERNAL_SERVER_ERROR
+          status(res)                              mustBe INTERNAL_SERVER_ERROR
           (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
         }
       }
@@ -198,7 +212,8 @@ class ROSMControllerSpec extends BaseTestSpec {
 
     "return unauthorised" when {
       "the auth connector does not return successfully" in {
-        when(mockAuthCon.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.failed(BearerTokenExpired("Unauthorised")))
+        when(mockAuthCon.authorise[Unit](any(), any())(any(), any()))
+          .thenReturn(Future.failed(BearerTokenExpired("Unauthorised")))
 
         doSubscribe() { res =>
           status(res) mustBe UNAUTHORIZED
@@ -210,23 +225,34 @@ class ROSMControllerSpec extends BaseTestSpec {
   "callback endpoint" should {
     "return a no content if called" in {
       status(
-        rosmController.subscriptionCallback().apply(
-          FakeRequest(Helpers.GET, "/rosm/callback?subscriptionId=123456")
-            .withBody(AnyContentAsJson(Json.obj("some" -> "body"))))
+        rosmController
+          .subscriptionCallback()
+          .apply(
+            FakeRequest(Helpers.GET, "/rosm/callback?subscriptionId=123456")
+              .withBody(AnyContentAsJson(Json.obj("some" -> "body")))
+          )
       ) mustBe NO_CONTENT
     }
   }
 
   def doRegister()(callback: Future[Result] => Unit): Unit = {
-    val res = await(rosmController.register("1234567890").apply(FakeRequest(Helpers.PUT, "/").withBody(AnyContentAsJson(Json.parse(regPayload)))))
+    val res = await(
+      rosmController
+        .register("1234567890")
+        .apply(FakeRequest(Helpers.PUT, "/").withBody(AnyContentAsJson(Json.parse(regPayload))))
+    )
 
     callback(Future(res))
   }
 
   def doSubscribe()(callback: Future[Result] => Unit): Unit = {
-    val res = await(rosmController.submitSubscription("1234567890", "Z1234")
-      .apply(FakeRequest(Helpers.PUT, "/").withBody(AnyContentAsJson(Json.parse(subscribePayload)))))
+    val res = await(
+      rosmController
+        .submitSubscription("1234567890", "Z1234")
+        .apply(FakeRequest(Helpers.PUT, "/").withBody(AnyContentAsJson(Json.parse(subscribePayload))))
+    )
 
     callback(Future(res))
   }
+
 }

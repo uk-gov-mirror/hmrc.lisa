@@ -25,8 +25,8 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class TaxEnrolmentConnector @Inject()(config: AppConfig, httpClientV2: HttpClientV2)(implicit ec: ExecutionContext)
-  extends RawResponseReads with Logging with CorrelationGenerator {
+class TaxEnrolmentConnector @Inject() (config: AppConfig, httpClientV2: HttpClientV2)(implicit ec: ExecutionContext)
+    extends RawResponseReads with Logging with CorrelationGenerator {
 
   lazy val taxEnrolmentUrl: String = config.taxEnrolmentUrl
 

@@ -29,15 +29,12 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.ExecutionContext
 
-class AuditServiceSpec extends PlaySpec
-  with MockitoSugar
-  with GuiceOneAppPerSuite
-  with BeforeAndAfter {
+class AuditServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfter {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val hc: HeaderCarrier         = HeaderCarrier()
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
-  val mockAppConfig: AppConfig = mock[AppConfig]
-  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+  val mockAppConfig: AppConfig           = mock[AppConfig]
+  implicit val ec: ExecutionContext      = app.injector.instanceOf[ExecutionContext]
 
   object SUT extends AuditService(mockAuditConnector, mockAppConfig)
 
@@ -49,7 +46,11 @@ class AuditServiceSpec extends PlaySpec
     }
 
     "build an audit event with the correct details" in {
-      SUT.audit("submitSubscriptionSuccess", "submitSubscription", Map("safeId" -> "safeId", "lisaManagerRef" -> "lisaManagerRef", "subscriptionId" -> "subscriptionId"))
+      SUT.audit(
+        "submitSubscriptionSuccess",
+        "submitSubscription",
+        Map("safeId" -> "safeId", "lisaManagerRef" -> "lisaManagerRef", "subscriptionId" -> "subscriptionId")
+      )
 
       val captor: ArgumentCaptor[DataEvent] = ArgumentCaptor.forClass(classOf[DataEvent])
 
@@ -58,7 +59,7 @@ class AuditServiceSpec extends PlaySpec
       val event = captor.getValue
 
       event.auditSource mustBe "lisa"
-      event.auditType mustBe "submitSubscriptionSuccess"
+      event.auditType   mustBe "submitSubscriptionSuccess"
 
       event.tags must contain("path" -> "submitSubscription")
       event.tags must contain("transactionName" -> "submitSubscriptionSuccess")
@@ -69,4 +70,5 @@ class AuditServiceSpec extends PlaySpec
     }
 
   }
+
 }

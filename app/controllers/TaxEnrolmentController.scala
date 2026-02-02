@@ -26,27 +26,30 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class TaxEnrolmentController @Inject() (override val authConnector: AuthConnector,
-                                        connector: TaxEnrolmentConnector,
-                                        val cc: ControllerComponents)
-                                       (implicit ec: ExecutionContext)
-  extends BackendController(cc: ControllerComponents)
-    with AuthorisedFunctions
-    with Logging {
+class TaxEnrolmentController @Inject() (
+  override val authConnector: AuthConnector,
+  connector: TaxEnrolmentConnector,
+  val cc: ControllerComponents
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc: ControllerComponents) with AuthorisedFunctions with Logging {
 
   def getSubscriptionsForGroupId(groupId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and AuthProviders(GovernmentGateway)) {
-      connector.enrolmentStatus(groupId)(hc).map {
-        response =>
-          logger.info(s"[TaxEnrolmentController][getSubscriptionsForGroupId] The connector has returned ${response.status} for $groupId")
-          Results.Status(response.status)(response.body)
-      } recover {
-        case _ =>
-          logger.error(s"[TaxEnrolmentController][getSubscriptionsForGroupId] Dependent systems are currently not responding returing INTERNAL_SERVER_ERROR ")
-          InternalServerError("""{"code":"INTERNAL_SERVER_ERROR","reason":"Dependent systems are currently not responding"}""")
+      connector.enrolmentStatus(groupId)(hc).map { response =>
+        logger.info(
+          s"[TaxEnrolmentController][getSubscriptionsForGroupId] The connector has returned ${response.status} for $groupId"
+        )
+        Results.Status(response.status)(response.body)
+      } recover { case _ =>
+        logger.error(
+          s"[TaxEnrolmentController][getSubscriptionsForGroupId] Dependent systems are currently not responding returing INTERNAL_SERVER_ERROR "
+        )
+        InternalServerError(
+          """{"code":"INTERNAL_SERVER_ERROR","reason":"Dependent systems are currently not responding"}"""
+        )
       }
-    } recover {
-      case _ => Unauthorized
+    } recover { case _ =>
+      Unauthorized
     }
   }
 

@@ -20,19 +20,20 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import java.util.UUID.randomUUID
 
-trait CorrelationGenerator { //scalastyle: off magic.number
+trait CorrelationGenerator { // scalastyle: off magic.number
 
   def generateRandomUUID: String = randomUUID.toString
 
   def addCorrelationId(hc: HeaderCarrier): HeaderCarrier = { // scalaStyle:off magic.number
 
     val CorrelationIdPattern = """.*([A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}).*""".r
-    val correlationId = hc.requestId match {
-      case Some(requestId) => requestId.value match {
-        case CorrelationIdPattern(prefix) => prefix + "-" + generateRandomUUID.substring(24)
-        case _ => generateRandomUUID
-      }
-      case _ => generateRandomUUID
+    val correlationId        = hc.requestId match {
+      case Some(requestId) =>
+        requestId.value match {
+          case CorrelationIdPattern(prefix) => prefix + "-" + generateRandomUUID.substring(24)
+          case _                            => generateRandomUUID
+        }
+      case _               => generateRandomUUID
     }
     hc.withExtraHeaders("CorrelationId" -> correlationId)
   }

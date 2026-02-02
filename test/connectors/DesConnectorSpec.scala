@@ -28,8 +28,9 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 
-class DesConnectorSpec extends BaseTestSpec {// scalastyle:off magic.number
+class DesConnectorSpec extends BaseTestSpec { // scalastyle:off magic.number
   val uuid = "123e4567-e89b-42d3-a456-556642440000"
+
   val desConnector = new DesConnector(mockAppConfig, mockHttpClientV2) {
     override def generateRandomUUID: String = uuid
   }
@@ -43,7 +44,7 @@ class DesConnectorSpec extends BaseTestSpec {// scalastyle:off magic.number
     "Return a status 202" when {
       "Valid json posted" in {
 
-        when(mockRequestBuilder.execute[HttpResponse](any(),any()))
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(
             Future.successful(
               HttpResponse(
@@ -60,13 +61,12 @@ class DesConnectorSpec extends BaseTestSpec {// scalastyle:off magic.number
     }
     "Return a status 503" when {
       "invalid json posted" in {
-        when(mockRequestBuilder.execute[HttpResponse](any(),any()))
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(
             Future.successful(
               HttpResponse(
                 status = SERVICE_UNAVAILABLE,
-                body =
-                  s"""
+                body = s"""
                 {
                   "code": "SERVICE_UNAVAILABLE",
                   "reason": "Dependent systems are currently not responding."
@@ -85,7 +85,7 @@ class DesConnectorSpec extends BaseTestSpec {// scalastyle:off magic.number
 
   "Return an exception" when {
     "an invalid status is returned" in {
-      when(mockRequestBuilder.execute[HttpResponse](any(),any()))
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("something failed", 502, 500)))
 
       intercept[UpstreamErrorResponse](await(desConnector.subscribe("Z019281", Json.obj())))
@@ -95,13 +95,12 @@ class DesConnectorSpec extends BaseTestSpec {// scalastyle:off magic.number
   "Registration endpoint" should {
     "Return a status 200" when {
       "Valid json posted" in {
-        when(mockRequestBuilder.execute[HttpResponse](any(),any()))
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(
             Future.successful(
               HttpResponse(
                 status = OK,
-                body =
-                  s"""{
+                body = s"""{
                         "safeId": "XE0001234567890",
                         "agentReferenceNumber": "AARN1234567",
                         "isEditable": true,
@@ -139,13 +138,12 @@ class DesConnectorSpec extends BaseTestSpec {// scalastyle:off magic.number
     }
     "Return a status 503" when {
       "invalid json posted" in {
-        when(mockRequestBuilder.execute[HttpResponse](any(),any()))
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(
             Future.successful(
               HttpResponse(
                 status = SERVICE_UNAVAILABLE,
-                body =
-                  s"""
+                body = s"""
                 {
                   "code": "SERVICE_UNAVAILABLE",
                   "reason": "Dependent systems are currently not responding."
@@ -162,61 +160,76 @@ class DesConnectorSpec extends BaseTestSpec {// scalastyle:off magic.number
     }
     "Return an exception" when {
       "an error status is returned" in {
-        when(mockRequestBuilder.execute[HttpResponse](any(),any()))
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("something failed", 502, 500)))
 
         intercept[UpstreamErrorResponse](await(desConnector.register("Z019256", Json.obj())))
       }
     }
   }
-"add correlation id" should {
-  "request id is not present in the headerCarrier" when {
-    "generate random correlation id" in {
-      val hc = HeaderCarrier()
-      desConnector.addCorrelationId(hc) mustBe hc.copy(extraHeaders = Seq("CorrelationId" -> uuid))
+
+  "add correlation id" should {
+    "request id is not present in the headerCarrier" when {
+      "generate random correlation id" in {
+        val hc = HeaderCarrier()
+        desConnector.addCorrelationId(hc) mustBe hc.copy(extraHeaders = Seq("CorrelationId" -> uuid))
+      }
+    }
+    "request id in headerCarrier" when {
+      "request id matches required format(8-4-4-4)" in {
+        val requestId = "abcd0000-dh12-fg34-ij56"
+        val hc        = HeaderCarrier(requestId = Some(RequestId(requestId)))
+        desConnector.addCorrelationId(hc) mustBe hc.copy(extraHeaders =
+          Seq("CorrelationId" -> s"$requestId-${uuid.substring(24)}")
+        )
+      }
+
+      "request id does not match required format(8-4-4-4)" in {
+        val requestId = "1a2b-dh12-fg34-ij56"
+        val hc        = HeaderCarrier(requestId = Some(RequestId(requestId)))
+        desConnector.addCorrelationId(hc) mustBe hc.copy(extraHeaders = Seq("CorrelationId" -> uuid))
+      }
     }
   }
- "request id in headerCarrier" when {
-   "request id matches required format(8-4-4-4)" in {
-     val requestId = "abcd0000-dh12-fg34-ij56"
-     val hc = HeaderCarrier(requestId = Some(RequestId(requestId)))
-     desConnector.addCorrelationId(hc) mustBe hc.copy(extraHeaders = Seq("CorrelationId" -> s"$requestId-${uuid.substring(24)}"))
-   }
-
-   "request id does not match required format(8-4-4-4)" in {
-     val requestId = "1a2b-dh12-fg34-ij56"
-     val hc = HeaderCarrier(requestId = Some(RequestId(requestId)))
-     desConnector.addCorrelationId(hc) mustBe hc.copy(extraHeaders = Seq("CorrelationId" -> uuid))
-   }
- }
-}
 
   private def doSubcribe(callback: HttpResponse => Unit): Unit = {
-    val jsVal: JsValue = Json.toJson(Source.fromInputStream(getClass.getResourceAsStream("/json/subscription_example.json")).mkString)
-    val response = Await.result(desConnector.subscribe("Z019283", jsVal), Duration.Inf)
+    val jsVal: JsValue =
+      Json.toJson(Source.fromInputStream(getClass.getResourceAsStream("/json/subscription_example.json")).mkString)
+    val response       = Await.result(desConnector.subscribe("Z019283", jsVal), Duration.Inf)
 
     callback(response)
   }
 
-
   private def doRegister(callback: HttpResponse => Unit): Unit = {
-    val jsVal: JsValue = Json.toJson(Source.fromInputStream(getClass.getResourceAsStream("/json/registration_example.json")).mkString)
-    val response = Await.result(desConnector.register("Z019283", jsVal), Duration.Inf)
+    val jsVal: JsValue =
+      Json.toJson(Source.fromInputStream(getClass.getResourceAsStream("/json/registration_example.json")).mkString)
+    val response       = Await.result(desConnector.register("Z019283", jsVal), Duration.Inf)
 
     callback(response)
   }
 
   private def doInvalidSubscribe(callback: HttpResponse => Unit): Unit = {
-    val jsVal: JsValue = Json.toJson(Source.fromInputStream(getClass.getResourceAsStream("/json/subscription_example.json")).mkString.replace("utr", "otr"))
-    val response = Await.result(desConnector.subscribe("Z019283", jsVal), Duration.Inf)
+    val jsVal: JsValue = Json.toJson(
+      Source
+        .fromInputStream(getClass.getResourceAsStream("/json/subscription_example.json"))
+        .mkString
+        .replace("utr", "otr")
+    )
+    val response       = Await.result(desConnector.subscribe("Z019283", jsVal), Duration.Inf)
 
     callback(response)
   }
 
   private def doInvalidRegister(callback: HttpResponse => Unit): Unit = {
-    val jsVal: JsValue = Json.toJson(Source.fromInputStream(getClass.getResourceAsStream("/json/registration_example.json")).mkString.replace("utr", "otr"))
-    val response = Await.result(desConnector.register("Z019283", jsVal), Duration.Inf)
+    val jsVal: JsValue = Json.toJson(
+      Source
+        .fromInputStream(getClass.getResourceAsStream("/json/registration_example.json"))
+        .mkString
+        .replace("utr", "otr")
+    )
+    val response       = Await.result(desConnector.register("Z019283", jsVal), Duration.Inf)
 
     callback(response)
   }
+
 }
