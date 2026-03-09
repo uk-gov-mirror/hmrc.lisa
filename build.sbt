@@ -1,27 +1,15 @@
-import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
+ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / majorVersion := 1
 
-val appName = "lisa"
-name := "lisa"
-PlayKeys.playDefaultPort := 8886
-majorVersion := 1
-retrieveManaged := true
-
-lazy val lisa = Project(appName, file("."))
-enablePlugins(PlayScala, SbtDistributablesPlugin)
-scalaSettings
-defaultSettings()
-disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
-
-scalaVersion := "2.13.16"
-
-libraryDependencies ++= AppDependencies()
-
-Compile / unmanagedResourceDirectories += baseDirectory.value / "resources"
-
-Test / fork := true
-
-CodeCoverageSettings()
-
-scalacOptions += "-Wconf:src=routes/.*:s"
+lazy val microservice = Project("lisa", file("."))
+  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
+  .disablePlugins(JUnitXmlReportPlugin) // Required to prevent https://github.com/scalatest/scalatest/issues/1427
+  .settings(
+    PlayKeys.playDefaultPort := 8886,
+    libraryDependencies ++= AppDependencies(),
+    Compile / unmanagedSourceDirectories += baseDirectory.value / "resources",
+    scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s")
+  )
+  .settings(CodeCoverageSettings())
 
 addCommandAlias("scalafmtAll", "all scalafmtSbt scalafmt Test/scalafmt")

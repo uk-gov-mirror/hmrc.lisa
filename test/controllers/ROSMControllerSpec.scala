@@ -16,7 +16,7 @@
 
 package controllers
 
-import helpers.BaseTestSpec
+import base.BaseTestSpec
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, verify, when}

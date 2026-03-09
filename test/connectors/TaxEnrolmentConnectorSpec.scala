@@ -16,7 +16,7 @@
 
 package connectors
 
-import helpers.BaseTestSpec
+import base.BaseTestSpec
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import play.api.http.Status.{ACCEPTED, INTERNAL_SERVER_ERROR, NO_CONTENT}

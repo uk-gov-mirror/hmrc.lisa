@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package helpers
+package base
 
 import config.AppConfig
 import connectors.{DesConnector, TaxEnrolmentConnector}

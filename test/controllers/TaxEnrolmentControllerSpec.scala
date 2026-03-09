@@ -16,7 +16,7 @@
 
 package controllers
 
-import helpers.BaseTestSpec
+import base.BaseTestSpec
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, OK, UNAUTHORIZED}
