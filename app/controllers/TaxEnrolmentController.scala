@@ -30,12 +30,12 @@ class TaxEnrolmentController @Inject() (
   override val authConnector: AuthConnector,
   connector: TaxEnrolmentConnector,
   val cc: ControllerComponents
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
     extends BackendController(cc: ControllerComponents) with AuthorisedFunctions with Logging {
 
   def getSubscriptionsForGroupId(groupId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and AuthProviders(GovernmentGateway)) {
-      connector.enrolmentStatus(groupId)(hc).map { response =>
+      connector.enrolmentStatus(groupId)(using hc).map { response =>
         logger.info(
           s"[TaxEnrolmentController][getSubscriptionsForGroupId] The connector has returned ${response.status} for $groupId"
         )

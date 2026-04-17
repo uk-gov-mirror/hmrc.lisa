@@ -41,7 +41,7 @@ class TaxEnrolmentControllerSpec extends BaseTestSpec {
   "Get Enrolments for Group ID" should {
     "return the status and body as returned from the connector" when {
       "no errors occur" in {
-        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(any()))
+        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(using any()))
           .thenReturn(Future.successful(HttpResponse(OK, "test")))
 
         val res = doGetSubscriptionsForGroupId()
@@ -52,7 +52,7 @@ class TaxEnrolmentControllerSpec extends BaseTestSpec {
     }
     "return appropriate 500 internal server error response" when {
       "any errors occur" in {
-        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(any()))
+        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(using any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("fail", BAD_REQUEST, BAD_REQUEST)))
 
         val res = doGetSubscriptionsForGroupId()

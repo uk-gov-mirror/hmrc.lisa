@@ -21,14 +21,15 @@ import play.api.Logging
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class DesConnector @Inject() (config: AppConfig, httpClientV2: HttpClientV2)(implicit ec: ExecutionContext)
+class DesConnector @Inject() (config: AppConfig, httpClientV2: HttpClientV2)(using ec: ExecutionContext)
     extends RawResponseReads with Logging with CorrelationGenerator {
 
-  lazy val desUrl          = config.desUrl
+  lazy val desUrl: String  = config.desUrl
   lazy val subscriptionUrl = s"$desUrl/lifetime-isa/manager"
   lazy val registrationUrl = s"$desUrl/registration/organisation"
 
@@ -37,22 +38,22 @@ class DesConnector @Inject() (config: AppConfig, httpClientV2: HttpClientV2)(imp
     "Authorization" -> s"Bearer ${config.desAuthToken}"
   )
 
-  def subscribe(lisaManager: String, payload: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def subscribe(lisaManager: String, payload: JsValue)(using hc: HeaderCarrier): Future[HttpResponse] = {
     val uri = s"$subscriptionUrl/$lisaManager/subscription"
     httpPost(uri, payload, "subscribe", "subscription")
   }
 
-  def register(utr: String, payload: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def register(utr: String, payload: JsValue)(using hc: HeaderCarrier): Future[HttpResponse] = {
     val uri = s"$registrationUrl/utr/$utr"
     httpPost(uri, payload, "register", "registerOnce")
   }
 
-  private def httpPost(uri: String, payload: JsValue, urlType: String, connectorLog: String)(implicit
+  private def httpPost(uri: String, payload: JsValue, urlType: String, connectorLog: String)(using
     hc: HeaderCarrier
   ) = {
     logger.info(s"DES Connector post $connectorLog $uri")
     val headerCarrier = addCorrelationId(hc)
-    httpClientV2.post(url"$uri")(headerCarrier).setHeader(desHeaders: _*).withBody(payload).execute recover {
+    httpClientV2.post(url"$uri")(headerCarrier).setHeader(desHeaders*).withBody(payload).execute recover {
       case e: Exception =>
         logger.error(s"Error in DesConnector $urlType : ${e.getMessage}")
         throw e

@@ -30,8 +30,6 @@ class TaxEnrolmentConnectorSpec extends BaseTestSpec {
 
   val taxEnrolmentConnector = new TaxEnrolmentConnector(mockAppConfig, mockHttpClientV2)
 
-  when(mockAppConfig.taxEnrolmentUrl).thenReturn("http://localhost:1234")
-
   "Get enrolment status" should {
     when(mockHttpClientV2.get(any())(any())).thenReturn(mockRequestBuilder)
 

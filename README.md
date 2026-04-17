@@ -11,7 +11,7 @@ LISA backend microservice
 
 ## Requirements
 
-This service is written in [Scala 2.13](http://www.scala-lang.org/) and [Play 3.0](http://playframework.com/), and needs at least Java 11 to run.
+This service is written in [Scala 3](http://www.scala-lang.org/) and [Play 3.0](http://playframework.com/), and needs at least Java 11 to run.
 
 ## Running Locally
 

@@ -60,7 +60,7 @@ class ROSMControllerSpec extends BaseTestSpec {
     "return a 200 ok response" when {
       "everything is valid and no errors are thrown" in {
 
-        when(mockDesConnector.register(any(), any())(any())).thenReturn(Future.successful(HttpResponse(OK, "{}")))
+        when(mockDesConnector.register(any(), any())(using any())).thenReturn(Future.successful(HttpResponse(OK, "{}")))
 
         doRegister() { res =>
           status(res) mustBe OK
@@ -70,7 +70,7 @@ class ROSMControllerSpec extends BaseTestSpec {
 
     "return a 400 error response with Invalid UTR as the response code" when {
       "the connector returns a 400 response" in {
-        when(mockDesConnector.register(any(), any())(any()))
+        when(mockDesConnector.register(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, regErrorJson)))
 
         doRegister() { res =>
@@ -82,7 +82,7 @@ class ROSMControllerSpec extends BaseTestSpec {
 
     "return a 500 error response" when {
       "the connector returns an error" in {
-        when(mockDesConnector.register(any(), any())(any())).thenReturn(Future.failed(new Exception("Error")))
+        when(mockDesConnector.register(any(), any())(using any())).thenReturn(Future.failed(new Exception("Error")))
 
         doRegister() { res =>
           status(res)                              mustBe INTERNAL_SERVER_ERROR
@@ -109,10 +109,10 @@ class ROSMControllerSpec extends BaseTestSpec {
     "return a 200 ok response with the subscriptionId" when {
       "everything is valid and no errors are thrown" in {
 
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any()))
+        when(mockDesConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
@@ -128,7 +128,7 @@ class ROSMControllerSpec extends BaseTestSpec {
                 "subscriptionId" -> "928282776"
               )
             )
-          )(any[HeaderCarrier])
+          )(using any[HeaderCarrier])
 
           (contentAsJson(res) \ "subscriptionId").as[String] mustBe "928282776"
         }
@@ -138,10 +138,10 @@ class ROSMControllerSpec extends BaseTestSpec {
     "return a 500 internal server error response" when {
 
       "the call to des fails" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any()))
+        when(mockDesConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)))
 
         doSubscribe() { res =>
@@ -150,17 +150,17 @@ class ROSMControllerSpec extends BaseTestSpec {
             auditType = ArgumentMatchers.eq("submitSubscriptionFailed"),
             path = ArgumentMatchers.eq("submitSubscription"),
             auditData = ArgumentMatchers.eq(Map("error" -> "Bad Request", "lisaManagerRef" -> "Z1234"))
-          )(any[HeaderCarrier])
+          )(using any[HeaderCarrier])
 
           (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
         }
       }
 
       "the call to des returns an unexpected status code" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any()))
+        when(mockDesConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(OK, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
@@ -170,10 +170,10 @@ class ROSMControllerSpec extends BaseTestSpec {
       }
 
       "the call to tax enrolments fails" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)))
 
-        when(mockDesConnector.subscribe(any(), any())(any()))
+        when(mockDesConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
@@ -183,10 +183,10 @@ class ROSMControllerSpec extends BaseTestSpec {
       }
 
       "the call to tax enrolments returns an unexpected status code" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any()))
+        when(mockDesConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
@@ -196,10 +196,10 @@ class ROSMControllerSpec extends BaseTestSpec {
       }
 
       "the response from des does not contain a subscriptionId" in {
-        when(mockTaxEnrolmentConnector.subscribe(any(), any())(any()))
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(any()))
+        when(mockDesConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{}""")))
 
         doSubscribe() { res =>
@@ -225,8 +225,7 @@ class ROSMControllerSpec extends BaseTestSpec {
   "callback endpoint" should {
     "return a no content if called" in {
       status(
-        rosmController
-          .subscriptionCallback()
+        rosmController.subscriptionCallback
           .apply(
             FakeRequest(Helpers.GET, "/rosm/callback?subscriptionId=123456")
               .withBody(AnyContentAsJson(Json.obj("some" -> "body")))

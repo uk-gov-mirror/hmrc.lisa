@@ -16,25 +16,19 @@
 
 package services
 
-import config.AppConfig
+import base.BaseTestSpec
+import org.mockito.Mockito.*
 import org.mockito.{ArgumentCaptor, ArgumentMatchers}
-import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
-import scala.concurrent.ExecutionContext
+class AuditServiceSpec extends BaseTestSpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfter {
 
-class AuditServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfter {
-
-  implicit val hc: HeaderCarrier         = HeaderCarrier()
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
-  val mockAppConfig: AppConfig           = mock[AppConfig]
-  implicit val ec: ExecutionContext      = app.injector.instanceOf[ExecutionContext]
 
   object SUT extends AuditService(mockAuditConnector, mockAppConfig)
 
@@ -42,7 +36,6 @@ class AuditServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSui
 
     before {
       reset(mockAuditConnector)
-      when(mockAppConfig.appName).thenReturn("lisa")
     }
 
     "build an audit event with the correct details" in {

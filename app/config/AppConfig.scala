@@ -23,9 +23,9 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 @Singleton
 class AppConfig @Inject() (configuration: Configuration) extends ServicesConfig(configuration) {
 
-  lazy val desUrl          = baseUrl("des")
-  lazy val desAuthToken    = getString("desauthtoken")
-  lazy val desUrlHeaderEnv = getString("environment")
+  lazy val desUrl: String          = baseUrl("des")
+  lazy val desAuthToken: String    = getString("desauthtoken")
+  lazy val desUrlHeaderEnv: String = getString("environment")
 
   lazy val taxEnrolmentUrl: String = baseUrl("tax-enrolments") + "/tax-enrolments"
   lazy val rosmCallbackUrl: String = getString("rosmCallbackUrl")

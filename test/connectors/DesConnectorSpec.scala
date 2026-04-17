@@ -31,11 +31,10 @@ import scala.io.Source
 class DesConnectorSpec extends BaseTestSpec { // scalastyle:off magic.number
   val uuid = "123e4567-e89b-42d3-a456-556642440000"
 
-  val desConnector = new DesConnector(mockAppConfig, mockHttpClientV2) {
+  val desConnector: DesConnector = new DesConnector(mockAppConfig, mockHttpClientV2) {
     override def generateRandomUUID: String = uuid
   }
 
-  when(mockAppConfig.desUrl).thenReturn("http://localhost:1234")
   when(mockHttpClientV2.post(any())(any())).thenReturn(mockRequestBuilder)
   when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
   when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
