@@ -20,13 +20,13 @@ import base.BaseTestSpec
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, verify, when}
-import play.api.http.Status.{ACCEPTED, BAD_REQUEST, INTERNAL_SERVER_ERROR, NO_CONTENT, OK, UNAUTHORIZED}
+import play.api.http.Status.*
 import play.api.libs.json.Json
 import play.api.mvc.{AnyContentAsJson, Result}
-import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers.{await, contentAsJson, defaultAwaitTimeout, status}
+import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.auth.core.BearerTokenExpired
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.Future
 import scala.io.Source
@@ -142,14 +142,19 @@ class ROSMControllerSpec extends BaseTestSpec {
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
         when(mockDesConnector.subscribe(any(), any())(using any()))
-          .thenReturn(Future.failed(UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)))
+          .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "Some error")))
 
         doSubscribe() { res =>
           status(res)                              mustBe INTERNAL_SERVER_ERROR
           verify(mockAuditService).audit(
             auditType = ArgumentMatchers.eq("submitSubscriptionFailed"),
             path = ArgumentMatchers.eq("submitSubscription"),
-            auditData = ArgumentMatchers.eq(Map("error" -> "Bad Request", "lisaManagerRef" -> "Z1234"))
+            auditData = ArgumentMatchers.eq(
+              Map(
+                "error"          -> "ROSM subscription failed. Returned a response status of 500 for zref Z1234",
+                "lisaManagerRef" -> "Z1234"
+              )
+            )
           )(using any[HeaderCarrier])
 
           (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
@@ -171,7 +176,7 @@ class ROSMControllerSpec extends BaseTestSpec {
 
       "the call to tax enrolments fails" in {
         when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
-          .thenReturn(Future.failed(UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)))
+          .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "error")))
 
         when(mockDesConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))

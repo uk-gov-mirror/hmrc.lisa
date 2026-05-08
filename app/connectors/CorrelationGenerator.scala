@@ -35,6 +35,7 @@ trait CorrelationGenerator { // scalastyle: off magic.number
         }
       case _               => generateRandomUUID
     }
+
     hc.withExtraHeaders("CorrelationId" -> correlationId)
   }
 

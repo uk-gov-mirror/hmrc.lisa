@@ -1,0 +1,103 @@
+/*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package utils
+
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
+import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import config.AppConfig
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
+import play.api.inject.Injector
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.{JsValue, Json}
+import utils.WireMockHelper
+
+import scala.io.Source
+import scala.util.Using
+
+trait ConnectorSpecHelper
+    extends PlaySpec
+    with MockitoSugar
+    with GuiceOneAppPerSuite
+    with WireMockHelper
+    with ScalaFutures
+    with IntegrationPatience {
+
+  def applicationBuilder(): GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.des.protocol"        -> "http",
+      "microservice.services.des.host"            -> "localhost",
+      "microservice.services.des.port"            -> server.port(),
+      "microservice.services.tax-enrolments.host" -> "localhost",
+      "microservice.services.tax-enrolments.port" -> server.port(),
+      "desauthtoken"                              -> "test-auth-token",
+      "environment"                               -> "test-env",
+      "metrics.enabled"                           -> false,
+      "auditing.enabled"                          -> false
+    )
+
+  override def fakeApplication(): Application = applicationBuilder().build()
+
+  lazy val injector: Injector   = app.injector
+  lazy val appConfig: AppConfig = injector.instanceOf[AppConfig]
+
+  val uuidPattern: String =
+    "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+
+  def buildResponse(returnStatus: Int, responseBody: String = ""): ResponseDefinitionBuilder = {
+    val response: ResponseDefinitionBuilder = aResponse()
+      .withStatus(returnStatus)
+      .withBody(responseBody)
+    if (responseBody.nonEmpty) {
+      response.withHeader("Content-Type", "application/json")
+    } else {
+      response
+    }
+  }
+
+  def stubForGet(url: String, returnStatus: Int, responseBody: String = ""): StubMapping = {
+    val response = buildResponse(returnStatus, responseBody)
+    server.stubFor(
+      get(urlEqualTo(url)).willReturn(response)
+    )
+  }
+
+  def stubForPost(url: String, returnStatus: Int, responseBody: String = ""): StubMapping = {
+    val response = buildResponse(returnStatus, responseBody)
+    server.stubFor(
+      post(urlEqualTo(url)).willReturn(response)
+    )
+  }
+
+  def stubForPut(url: String, returnStatus: Int, responseBody: String = ""): StubMapping = {
+    val response = buildResponse(returnStatus, responseBody)
+    server.stubFor(
+      put(urlEqualTo(url)).willReturn(response)
+    )
+  }
+
+  def loadStringFromResource(path: String): String =
+    Using.resource(Source.fromInputStream(getClass.getResourceAsStream(path)))(_.mkString)
+
+  def loadJsonFromResource(path: String): JsValue =
+    Json.toJson(loadStringFromResource(path))
+
+}

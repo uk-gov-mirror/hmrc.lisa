@@ -19,12 +19,12 @@ package controllers
 import base.BaseTestSpec
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
-import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, OK, UNAUTHORIZED}
+import play.api.http.Status.{INTERNAL_SERVER_ERROR, OK, UNAUTHORIZED}
 import play.api.libs.json.Json
 import play.api.test.Helpers.{contentAsJson, contentAsString, defaultAwaitTimeout, status}
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.auth.core.BearerTokenExpired
-import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
 
@@ -39,23 +39,39 @@ class TaxEnrolmentControllerSpec extends BaseTestSpec {
   }
 
   "Get Enrolments for Group ID" should {
+
     "return the status and body as returned from the connector" when {
       "no errors occur" in {
         when(mockTaxEnrolmentConnector.enrolmentStatus(any())(using any()))
           .thenReturn(Future.successful(HttpResponse(OK, "test")))
 
-        val res = doGetSubscriptionsForGroupId()
+        val res = getSubscriptionsForGroupId()
 
         status(res)          mustBe OK
         contentAsString(res) mustBe "test"
       }
     }
-    "return appropriate 500 internal server error response" when {
-      "any errors occur" in {
-        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(using any()))
-          .thenReturn(Future.failed(UpstreamErrorResponse("fail", BAD_REQUEST, BAD_REQUEST)))
 
-        val res = doGetSubscriptionsForGroupId()
+    "return appropriate 500 internal server error response" when {
+      "a 500 is returned from the connector" in {
+        val body = """{"code":"INTERNAL_SERVER_ERROR","reason":"Dependent systems are currently not responding"}"""
+
+        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(using any()))
+          .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, body)))
+
+        val res = getSubscriptionsForGroupId()
+
+        status(res)        mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(res) mustBe Json.parse(
+          """{"code":"INTERNAL_SERVER_ERROR","reason":"Dependent systems are currently not responding"}"""
+        )
+      }
+
+      "the connector returns a failed future" in {
+        when(mockTaxEnrolmentConnector.enrolmentStatus(any())(using any()))
+          .thenReturn(Future.failed(new RuntimeException("connector failure")))
+
+        val res = getSubscriptionsForGroupId()
 
         status(res)        mustBe INTERNAL_SERVER_ERROR
         contentAsJson(res) mustBe Json.parse(
@@ -63,12 +79,13 @@ class TaxEnrolmentControllerSpec extends BaseTestSpec {
         )
       }
     }
+
     "return unauthorised" when {
       "the auth connector doesnt return successfully" in {
         when(mockAuthCon.authorise[Unit](any(), any())(any(), any()))
           .thenReturn(Future.failed(BearerTokenExpired("unauthorised")))
 
-        val res = doGetSubscriptionsForGroupId()
+        val res = getSubscriptionsForGroupId()
 
         status(res) mustBe UNAUTHORIZED
       }
@@ -76,7 +93,7 @@ class TaxEnrolmentControllerSpec extends BaseTestSpec {
 
   }
 
-  private def doGetSubscriptionsForGroupId() =
+  private def getSubscriptionsForGroupId() =
     taxEnrolmentController.getSubscriptionsForGroupId("1234567890").apply(FakeRequest(Helpers.GET, "/"))
 
 }
