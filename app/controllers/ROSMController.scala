@@ -17,7 +17,7 @@
 package controllers
 
 import config.AppConfig
-import connectors.{DesConnector, TaxEnrolmentConnector}
+import connectors.{LisaRoutingConnector, TaxEnrolmentConnector}
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request, Result, Results}
@@ -33,7 +33,7 @@ import scala.util.control.NonFatal
 
 class ROSMController @Inject() (
   override val authConnector: AuthConnector,
-  connector: DesConnector,
+  connector: LisaRoutingConnector,
   enrolmentConnector: TaxEnrolmentConnector,
   cc: ControllerComponents,
   auditService: AuditService,

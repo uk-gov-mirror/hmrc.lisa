@@ -17,7 +17,7 @@
 package base
 
 import config.AppConfig
-import connectors.{DesConnector, TaxEnrolmentConnector}
+import connectors.{LisaRoutingConnector, TaxEnrolmentConnector}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext
 
 trait BaseTestSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
 
-  lazy val mockDesConnector: DesConnector                   = mock[DesConnector]
+  lazy val mockLisaRoutingConnector: LisaRoutingConnector   = mock[LisaRoutingConnector]
   lazy val mockTaxEnrolmentConnector: TaxEnrolmentConnector = mock[TaxEnrolmentConnector]
   lazy val mockAuthCon: AuthConnector                       = mock[AuthConnector]
   lazy val controllerComponents: ControllerComponents       = stubControllerComponents()

@@ -31,4 +31,9 @@ class AppConfig @Inject() (configuration: Configuration) extends ServicesConfig(
   lazy val rosmCallbackUrl: String = getString("rosmCallbackUrl")
   lazy val appName: String         = getString("appName")
 
+  lazy val hipUrl: String = baseUrl("hip")
+
+  lazy val useHipSubscription: Boolean =
+    getBoolean("features.hip.subscription")
+
 }
