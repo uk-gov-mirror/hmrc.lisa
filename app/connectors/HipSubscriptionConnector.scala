@@ -20,9 +20,11 @@ import config.AppConfig
 import play.api.Logging
 import play.api.libs.json.JsValue
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import sttp.model.HeaderNames
+import java.util.Base64
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
-
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -38,11 +40,19 @@ class HipSubscriptionConnector @Inject() (
   private lazy val hipUrl: String =
     config.hipUrl
 
+  private def authSecret: String =
+    Base64.getEncoder
+      .encodeToString(
+        s"${config.hipClientId}:${config.hipClientSecret}"
+          .getBytes(StandardCharsets.UTF_8)
+      )
+
   private def hipHeaders: Seq[(String, String)] =
     Seq(
-      "X-Originating-System"  -> "LISA",
-      "X-Receipt-Date"        -> DateTimeFormatter.ISO_INSTANT.format(Instant.now().truncatedTo(ChronoUnit.SECONDS)),
-      "X-Transmitting-System" -> "HIP"
+      HeaderNames.Authorization -> s"Basic $authSecret",
+      "X-Originating-System"    -> "LISA",
+      "X-Receipt-Date"          -> DateTimeFormatter.ISO_INSTANT.format(Instant.now().truncatedTo(ChronoUnit.SECONDS)),
+      "X-Transmitting-System"   -> "HIP"
     )
 
   def subscribe(lisaManagerReferenceNumber: String, payload: JsValue)(using hc: HeaderCarrier): Future[HttpResponse] = {

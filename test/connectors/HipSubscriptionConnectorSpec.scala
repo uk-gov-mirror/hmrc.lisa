@@ -169,6 +169,7 @@ class HipSubscriptionConnectorSpec extends ConnectorSpecHelper {
         .withHeader("X-Originating-System", equalTo("LISA"))
         .withHeader("X-Receipt-Date", matching(".+"))
         .withHeader("X-Transmitting-System", equalTo("HIP"))
+        .withHeader("Authorization", equalTo("Basic dGVzdElkOnRlc3RTZWNyZXQ="))
         .withRequestBody(equalToJson(expectedBody.toString))
     )
 

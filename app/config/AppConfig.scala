@@ -33,6 +33,12 @@ class AppConfig @Inject() (configuration: Configuration) extends ServicesConfig(
 
   lazy val hipUrl: String = baseUrl("hip")
 
+  lazy val hipClientId: String =
+    getString("microservice.services.hip.clientId")
+
+  lazy val hipClientSecret: String =
+    getString("microservice.services.hip.clientSecret")
+
   lazy val useHipSubscription: Boolean =
     getBoolean("features.hip.subscription")
 
