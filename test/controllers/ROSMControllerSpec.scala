@@ -115,10 +115,10 @@ class ROSMControllerSpec extends BaseTestSpec {
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
         when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
-          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"success":{"subscriptionId":"123456789012"}}""")))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId":"123456789012"}""")))
 
         doSubscribe() { res =>
-          status(res)                                                    mustBe ACCEPTED
+          status(res)                                        mustBe ACCEPTED
           verify(mockAuditService).audit(
             auditType = ArgumentMatchers.eq("submitSubscriptionSuccess"),
             path = ArgumentMatchers.eq("submitSubscription"),
@@ -132,7 +132,7 @@ class ROSMControllerSpec extends BaseTestSpec {
             )
           )(using any[HeaderCarrier])
 
-          (contentAsJson(res) \ "success" \ "subscriptionId").as[String] mustBe "123456789012"
+          (contentAsJson(res) \ "subscriptionId").as[String] mustBe "123456789012"
         }
       }
 

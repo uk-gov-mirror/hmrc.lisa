@@ -83,7 +83,7 @@ class LisaRoutingConnectorSpec extends ConnectorSpecHelper with BeforeAndAfterEa
         )
 
       val actual   = await(connector.subscribe(lisaManagerReferenceNumber, payload))
-      val expected = HttpResponse(ACCEPTED, """{"SubscriptionID":"928282776"}""")
+      val expected = HttpResponse(ACCEPTED, """{"subscriptionId":"928282776"}""")
 
       actual.status           mustBe expected.status
       Json.parse(actual.body) mustBe Json.parse(expected.body)

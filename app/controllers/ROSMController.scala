@@ -26,7 +26,6 @@ import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthProviders, AuthorisedFunctions}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import scala.util.Try
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -73,9 +72,9 @@ class ROSMController @Inject() (
         response.status match {
           case ACCEPTED =>
             val success = Results.Status(response.status)(response.body)
-            val safeId  = Try((requestJson \ "safeId").as[String]).toOption
+            val safeId  = (requestJson \ "safeId").as[String]
 
-            val subscriptionId = (response.json \ "success" \ "subscriptionId").as[String]
+            val subscriptionId = (response.json \ "subscriptionId").as[String]
 
             logger.info(
               s"[ROSMController][submitSubscription] calling Tax Enrolments with subscriptionId $subscriptionId and safeId $safeId"
@@ -86,13 +85,13 @@ class ROSMController @Inject() (
               path = "submitSubscription",
               auditData = Map(
                 "response"       -> response.status.toString,
-                "safeId"         -> safeId.getOrElse(""),
+                "safeId"         -> safeId,
                 "lisaManagerRef" -> lisaManagerRef,
                 "subscriptionId" -> subscriptionId
               )
             )
 
-            submitTaxEnrolmentSubscription(subscriptionId, safeId.getOrElse(""), success)
+            submitTaxEnrolmentSubscription(subscriptionId, safeId, success)
           case _        =>
             logger.warn(
               s"[ROSMController][submitSubscription] ROSM subscription failed with code ${response.status} for zref $lisaManagerRef"

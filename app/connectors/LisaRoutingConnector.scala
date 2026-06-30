@@ -45,7 +45,7 @@ class LisaRoutingConnector @Inject() (
 
               HttpResponse(
                 status = ACCEPTED,
-                body = Json.obj("SubscriptionID" -> subscriptionId).toString,
+                body = Json.obj("subscriptionId" -> subscriptionId).toString,
                 headers = response.headers
               )
 
