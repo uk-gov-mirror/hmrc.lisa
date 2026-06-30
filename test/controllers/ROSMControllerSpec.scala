@@ -118,7 +118,7 @@ class ROSMControllerSpec extends BaseTestSpec {
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"success":{"subscriptionId":"123456789012"}}""")))
 
         doSubscribe() { res =>
-          status(res)                                        mustBe ACCEPTED
+          status(res)                                                    mustBe ACCEPTED
           verify(mockAuditService).audit(
             auditType = ArgumentMatchers.eq("submitSubscriptionSuccess"),
             path = ArgumentMatchers.eq("submitSubscription"),
@@ -135,6 +135,20 @@ class ROSMControllerSpec extends BaseTestSpec {
           (contentAsJson(res) \ "success" \ "subscriptionId").as[String] mustBe "123456789012"
         }
       }
+
+      "throws an exception when status is not ACCEPTED(NO_CONTENT)" in {
+        when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"success":{"subscriptionId":"123456789012"}}""")))
+
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
+          .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
+
+        doSubscribe() { res =>
+          status(res)                              mustBe INTERNAL_SERVER_ERROR
+          (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
+        }
+      }
+
     }
 
     "return a 500 internal server error response" when {
