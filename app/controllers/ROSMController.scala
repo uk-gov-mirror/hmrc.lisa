@@ -74,7 +74,8 @@ class ROSMController @Inject() (
           case ACCEPTED =>
             val success        = Results.Status(response.status)(response.body)
             val safeId         = (requestJson \ "safeId").as[String]
-            val subscriptionId = (response.json \ "subscriptionId").as[String]
+            
+            val subscriptionId = (response.json \ "success" \ "subscriptionId").as[String]
 
             logger.info(
               s"[ROSMController][submitSubscription] calling Tax Enrolments with subscriptionId $subscriptionId and safeId $safeId"
