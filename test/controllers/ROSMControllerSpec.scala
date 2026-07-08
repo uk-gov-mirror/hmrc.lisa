@@ -35,7 +35,7 @@ class ROSMControllerSpec extends BaseTestSpec {
 
   lazy val rosmController = new ROSMController(
     mockAuthCon,
-    mockDesConnector,
+    mockLisaRoutingConnector,
     mockTaxEnrolmentConnector,
     controllerComponents,
     mockAuditService,
@@ -43,7 +43,7 @@ class ROSMControllerSpec extends BaseTestSpec {
   )
 
   override def beforeEach(): Unit = {
-    reset(mockDesConnector)
+    reset(mockLisaRoutingConnector)
     when(mockAuthCon.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
   }
 
@@ -60,7 +60,8 @@ class ROSMControllerSpec extends BaseTestSpec {
     "return a 200 ok response" when {
       "everything is valid and no errors are thrown" in {
 
-        when(mockDesConnector.register(any(), any())(using any())).thenReturn(Future.successful(HttpResponse(OK, "{}")))
+        when(mockLisaRoutingConnector.register(any(), any())(using any()))
+          .thenReturn(Future.successful(HttpResponse(OK, "{}")))
 
         doRegister() { res =>
           status(res) mustBe OK
@@ -70,7 +71,7 @@ class ROSMControllerSpec extends BaseTestSpec {
 
     "return a 400 error response with Invalid UTR as the response code" when {
       "the connector returns a 400 response" in {
-        when(mockDesConnector.register(any(), any())(using any()))
+        when(mockLisaRoutingConnector.register(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, regErrorJson)))
 
         doRegister() { res =>
@@ -82,7 +83,8 @@ class ROSMControllerSpec extends BaseTestSpec {
 
     "return a 500 error response" when {
       "the connector returns an error" in {
-        when(mockDesConnector.register(any(), any())(using any())).thenReturn(Future.failed(new Exception("Error")))
+        when(mockLisaRoutingConnector.register(any(), any())(using any()))
+          .thenReturn(Future.failed(new Exception("Error")))
 
         doRegister() { res =>
           status(res)                              mustBe INTERNAL_SERVER_ERROR
@@ -112,8 +114,8 @@ class ROSMControllerSpec extends BaseTestSpec {
         when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(using any()))
-          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
+        when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId":"123456789012"}""")))
 
         doSubscribe() { res =>
           status(res)                                        mustBe ACCEPTED
@@ -125,14 +127,28 @@ class ROSMControllerSpec extends BaseTestSpec {
                 "response"       -> status(res).toString,
                 "safeId"         -> "XE0001234567890",
                 "lisaManagerRef" -> "Z1234",
-                "subscriptionId" -> "928282776"
+                "subscriptionId" -> "123456789012"
               )
             )
           )(using any[HeaderCarrier])
 
-          (contentAsJson(res) \ "subscriptionId").as[String] mustBe "928282776"
+          (contentAsJson(res) \ "subscriptionId").as[String] mustBe "123456789012"
         }
       }
+
+      "throws an exception when status is not ACCEPTED(NO_CONTENT)" in {
+        when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
+          .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"success":{"subscriptionId":"123456789012"}}""")))
+
+        when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
+          .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
+
+        doSubscribe() { res =>
+          status(res)                              mustBe INTERNAL_SERVER_ERROR
+          (contentAsJson(res) \ "code").as[String] mustBe "INTERNAL_SERVER_ERROR"
+        }
+      }
+
     }
 
     "return a 500 internal server error response" when {
@@ -141,7 +157,7 @@ class ROSMControllerSpec extends BaseTestSpec {
         when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(using any()))
+        when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "Some error")))
 
         doSubscribe() { res =>
@@ -165,7 +181,7 @@ class ROSMControllerSpec extends BaseTestSpec {
         when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(using any()))
+        when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(OK, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
@@ -178,7 +194,7 @@ class ROSMControllerSpec extends BaseTestSpec {
         when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "error")))
 
-        when(mockDesConnector.subscribe(any(), any())(using any()))
+        when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
@@ -191,7 +207,7 @@ class ROSMControllerSpec extends BaseTestSpec {
         when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(using any()))
+        when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{"subscriptionId": "928282776"}""")))
 
         doSubscribe() { res =>
@@ -204,7 +220,7 @@ class ROSMControllerSpec extends BaseTestSpec {
         when(mockTaxEnrolmentConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
-        when(mockDesConnector.subscribe(any(), any())(using any()))
+        when(mockLisaRoutingConnector.subscribe(any(), any())(using any()))
           .thenReturn(Future.successful(HttpResponse(ACCEPTED, s"""{}""")))
 
         doSubscribe() { res =>

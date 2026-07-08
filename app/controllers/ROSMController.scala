@@ -17,7 +17,7 @@
 package controllers
 
 import config.AppConfig
-import connectors.{DesConnector, TaxEnrolmentConnector}
+import connectors.{LisaRoutingConnector, TaxEnrolmentConnector}
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request, Result, Results}
@@ -26,14 +26,13 @@ import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthProviders, AuthorisedFunctions}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 class ROSMController @Inject() (
   override val authConnector: AuthConnector,
-  connector: DesConnector,
+  connector: LisaRoutingConnector,
   enrolmentConnector: TaxEnrolmentConnector,
   cc: ControllerComponents,
   auditService: AuditService,
@@ -72,8 +71,9 @@ class ROSMController @Inject() (
 
         response.status match {
           case ACCEPTED =>
-            val success        = Results.Status(response.status)(response.body)
-            val safeId         = (requestJson \ "safeId").as[String]
+            val success = Results.Status(response.status)(response.body)
+            val safeId  = (requestJson \ "safeId").as[String]
+
             val subscriptionId = (response.json \ "subscriptionId").as[String]
 
             logger.info(

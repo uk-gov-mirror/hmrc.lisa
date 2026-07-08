@@ -16,13 +16,14 @@
 
 package connectors
 
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
 
 import java.util.UUID
 
-class CorrelationGeneratorSpec extends PlaySpec with MockitoSugar {
+class CorrelationGeneratorSpec extends PlaySpec with MockitoSugar with Matchers {
 
   private val uuid = UUID.randomUUID().toString
 
@@ -61,6 +62,39 @@ class CorrelationGeneratorSpec extends PlaySpec with MockitoSugar {
       }
     }
 
+  }
+
+  "generateCorrelationId" should {
+
+    "generate a completely new correlation id when no request id exists" in {
+      val result = testClass.generateCorrelationId(None)
+
+      result mustBe uuid
+    }
+
+    "generate a completely new correlation id when request id is not UUID-like" in {
+      val result = testClass.generateCorrelationId(Some(RequestId("not-a-valid-request-id")))
+
+      result mustBe uuid
+    }
+
+    "preserve the first four UUID sections from the request id and replace the final section" in {
+      val requestId =
+        RequestId("12345678-1234-5678-abcd-999999999999")
+
+      val result = testClass.generateCorrelationId(Some(requestId))
+
+      result mustBe s"12345678-1234-5678-abcd-${uuid.substring(24)}"
+    }
+
+    "extract a UUID-like prefix from a request id containing surrounding text" in {
+      val requestId =
+        RequestId("prefix-12345678-1234-5678-abcd-999999999999-suffix")
+
+      val result = testClass.generateCorrelationId(Some(requestId))
+
+      result mustBe s"12345678-1234-5678-abcd-${uuid.substring(24)}"
+    }
   }
 
 }

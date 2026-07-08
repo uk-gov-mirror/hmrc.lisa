@@ -16,18 +16,25 @@
 
 package connectors
 
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
 
 import java.util.UUID.randomUUID
 
 trait CorrelationGenerator { // scalastyle: off magic.number
 
+  val CorrelationIdHeaderName = "CorrelationId"
+
   def generateRandomUUID: String = randomUUID.toString
 
   def addCorrelationId(hc: HeaderCarrier): HeaderCarrier = { // scalaStyle:off magic.number
 
+    val correlationId: String = generateCorrelationId(hc.requestId)
+    hc.withExtraHeaders(CorrelationIdHeaderName -> correlationId)
+  }
+
+  def generateCorrelationId(requestId: Option[RequestId]): String = {
     val CorrelationIdPattern = """.*([A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}).*""".r
-    val correlationId        = hc.requestId match {
+    val correlationId        = requestId match {
       case Some(requestId) =>
         requestId.value match {
           case CorrelationIdPattern(prefix) => prefix + "-" + generateRandomUUID.substring(24)
@@ -35,8 +42,7 @@ trait CorrelationGenerator { // scalastyle: off magic.number
         }
       case _               => generateRandomUUID
     }
-
-    hc.withExtraHeaders("CorrelationId" -> correlationId)
+    correlationId
   }
 
 }

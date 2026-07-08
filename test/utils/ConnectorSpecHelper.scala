@@ -46,12 +46,16 @@ trait ConnectorSpecHelper
       "microservice.services.des.protocol"        -> "http",
       "microservice.services.des.host"            -> "localhost",
       "microservice.services.des.port"            -> server.port(),
+      "microservice.services.hip.protocol"        -> "http",
+      "microservice.services.hip.host"            -> "localhost",
+      "microservice.services.hip.port"            -> server.port(),
       "microservice.services.tax-enrolments.host" -> "localhost",
       "microservice.services.tax-enrolments.port" -> server.port(),
       "desauthtoken"                              -> "test-auth-token",
       "environment"                               -> "test-env",
       "metrics.enabled"                           -> false,
-      "auditing.enabled"                          -> false
+      "auditing.enabled"                          -> false,
+      "features.hip.subscription"                 -> false
     )
 
   override def fakeApplication(): Application = applicationBuilder().build()
