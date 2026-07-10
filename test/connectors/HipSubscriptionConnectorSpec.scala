@@ -41,7 +41,7 @@ class HipSubscriptionConnectorSpec extends ConnectorSpecHelper {
     injector.instanceOf[HipSubscriptionConnector]
 
   private val subscribeUrl =
-    "/RESTAdapter/lisa/subscription/Z019283"
+    "/etmp/RESTAdapter/lisa/subscription/Z019283"
 
   "HipSubscriptionConnector" should {
 

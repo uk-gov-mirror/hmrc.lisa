@@ -57,7 +57,7 @@ class HipSubscriptionConnector @Inject() (
 
   def subscribe(lisaManagerReferenceNumber: String, payload: JsValue)(using hc: HeaderCarrier): Future[HttpResponse] = {
     val uri =
-      s"$hipUrl/RESTAdapter/lisa/subscription/$lisaManagerReferenceNumber"
+      s"$hipUrl/etmp/RESTAdapter/lisa/subscription/$lisaManagerReferenceNumber"
 
     logger.info(s"HIP Connector post subscribe $uri")
 
